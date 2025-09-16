@@ -68,6 +68,22 @@ async function sendResetCodeEmail(toEmail, code, link) {
   return info;
 }
 
-module.exports = { sendResetCodeEmail };
+async function verifyEmailTransport() {
+  try {
+    if (!nodemailer) {
+      console.warn('[email] nodemailer missing; skipping transport verify');
+      return false;
+    }
+    const transporter = buildTransport();
+    const ok = await transporter.verify();
+    console.log(`[email] SMTP verify: ${ok ? 'OK' : 'FAILED'} host=${process.env.SMTP_HOST || 'ethereal'} port=${process.env.SMTP_PORT || 587}`);
+    return ok;
+  } catch (e) {
+    console.error('[email] SMTP verify failed:', e.message);
+    return false;
+  }
+}
+
+module.exports = { sendResetCodeEmail, verifyEmailTransport };
 
 

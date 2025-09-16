@@ -2,12 +2,15 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/database');
+const { verifyEmailTransport } = require('./app/utils/email');
 
 // Load environment variables
 dotenv.config();
 
 // Connect to database
 connectDB();
+// Verify email transport asynchronously (non-blocking)
+(async () => { await verifyEmailTransport(); })();
 
 const app = express();
 

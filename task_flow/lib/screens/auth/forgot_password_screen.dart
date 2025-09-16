@@ -34,10 +34,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
       if (!mounted) return;
       if (res.statusCode >= 200 && res.statusCode < 300) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reset code sent to your email')));
-        Navigator.of(context).pushReplacementNamed('/verify');
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password reset link sent to your email')));
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed (${res.statusCode}) to send code')));
+        String msg = 'Failed (${res.statusCode}) to send reset link';
+        try { final body = jsonDecode(res.body); if (body['message'] != null) msg = body['message']; } catch (_) {}
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
       }
     } catch (e) {
       if (!mounted) return;
@@ -74,7 +75,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ElevatedButton(
                       onPressed: _sendCode,
                       style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
-                      child: const Text('Send Code'),
+                      child: const Text('Send Reset Link'),
                     ),
                   ],
                 ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AuthProvider with ChangeNotifier {
   final SharedPreferences _prefs;
@@ -40,60 +42,46 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  static const String _apiBase = 'http://localhost:5000';
+
   Future<bool> login(String email, String password) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
+      final uri = Uri.parse('$_apiBase/api/users/login');
+      final res = await http.post(
+        uri,
+        headers: { 'Content-Type': 'application/json' },
+        body: jsonEncode({ 'email': email, 'password': password })
+      );
 
-      // Mock authentication - in real app, this would be an API call
-      if (email.isNotEmpty && password.isNotEmpty) {
-        // Create different users based on email for testing
-        UserRole role = UserRole.teamMember;
-        String name = 'John Doe';
-        String department = 'Engineering';
-        String teamId = 'team_1';
-        
-        if (email.contains('ceo')) {
-          role = UserRole.ceo;
-          name = 'CEO User';
-          department = 'Executive';
-        } else if (email.contains('pm') || email.contains('manager')) {
-          role = UserRole.projectManager;
-          name = 'Project Manager';
-          department = 'Engineering';
-        } else if (email.contains('hr')) {
-          role = UserRole.hr;
-          name = 'HR Manager';
-          department = 'Human Resources';
-        } else if (email.contains('team')) {
-          role = UserRole.teamMember;
-          name = 'Team Member';
-          department = 'Engineering';
-        }
-
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        final data = jsonDecode(res.body)['data'];
+        final userJson = data['user'];
         _currentUser = User(
-          id: '1',
-          name: name,
-          email: email,
-          role: role,
-          createdAt: DateTime.now(),
-          department: department,
-          teamId: teamId,
+          id: userJson['_id'] ?? userJson['id'],
+          name: userJson['name'],
+          email: userJson['email'],
+          role: UserRole.values.firstWhere(
+            (e) => e.toString() == 'UserRole.' + (userJson['role'] ?? 'teamMember'),
+            orElse: () => UserRole.teamMember,
+          ),
+          avatar: userJson['avatar'],
+          createdAt: DateTime.parse(userJson['createdAt'] ?? DateTime.now().toIso8601String()),
+          isActive: userJson['isActive'] ?? true,
+          department: userJson['department'],
+          teamId: userJson['teamId']?.toString(),
         );
-
-        // Save user to storage
-        await _prefs.setString('current_user', 'mock_user_data');
+        await _prefs.setString('current_user', jsonEncode(userJson));
         await _prefs.setBool('is_logged_in', true);
-
         _isLoading = false;
         notifyListeners();
         return true;
       } else {
-        _error = 'Invalid email or password';
+        final msg = jsonDecode(res.body)['message'] ?? 'Login failed';
+        _error = msg;
         _isLoading = false;
         notifyListeners();
         return false;

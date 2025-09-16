@@ -258,8 +258,7 @@ module.exports = {
 
       const user = await User.findOne({ email });
       if (!user) {
-        // Respond success to avoid user enumeration
-        return sendSuccess(res, 'If an account exists, a code has been sent');
+        return sendError(res, 'No account found with this email', 404);
       }
 
       const code = generateSixDigitCode();
@@ -269,8 +268,11 @@ module.exports = {
       const record = await PasswordReset.create({ email, userId: user._id, code, expiresAt });
 
       const frontendBase = process.env.FRONTEND_URL || 'http://localhost:3000';
-      // Send a link with a token that references the password reset record
-      const link = `${frontendBase}/reset?token=${encodeURIComponent(record._id.toString())}&email=${encodeURIComponent(email)}`;
+      // Build link compatible with Flutter web hash routing
+      const pathWithQuery = `/reset?token=${encodeURIComponent(record._id.toString())}&email=${encodeURIComponent(email)}`;
+      const link = frontendBase.includes('#')
+        ? `${frontendBase}${pathWithQuery}`
+        : `${frontendBase}#${pathWithQuery}`;
 
       // Send email (link only; no code in body)
       try {

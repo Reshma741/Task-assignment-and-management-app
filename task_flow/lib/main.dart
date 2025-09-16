@@ -6,6 +6,7 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/auth/forgot_password_screen.dart';
 import 'screens/auth/verify_code_screen.dart';
+import 'screens/auth/reset_password_screen.dart';
 import 'screens/home/dashboard_screen.dart';
 import 'providers/auth_provider.dart';
 import 'providers/task_provider.dart';
@@ -51,7 +52,8 @@ class MyApp extends StatelessWidget {
               '/login': (context) => const LoginScreen(),
               '/register': (context) => const RegisterScreen(),
               '/forgot': (context) => const ForgotPasswordScreen(),
-              '/verify': (context) => const VerifyCodeScreen(),
+              // '/verify' kept for legacy but not used now
+              '/reset': (context) => const ResetPasswordScreen(),
               '/dashboard': (context) => const DashboardScreen(),
             },
           );
